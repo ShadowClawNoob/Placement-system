@@ -1,0 +1,75 @@
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+ 
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Anim = script:WaitForChild("Animation")
+local character = player.Character or player.CharacterAdded:Wait()
+local Humanoid = character:WaitForChild("Humanoid")
+ 
+local AnimTrack = Humanoid:LoadAnimation(Anim)
+ 
+local placing = false
+local delete = false
+ 
+local RemoveSelect = Instance.new("SelectionBox", workspace)
+ 
+local PlaceBlock = Instance.new("Part")
+PlaceBlock.Size = Vector3.new(3, 3, 3)
+PlaceBlock.Anchored = true
+PlaceBlock.CanCollide = false
+PlaceBlock.Transparency = 0.5
+PlaceBlock.BrickColor = BrickColor.new("New Yeller")
+ 
+script.Parent.Equipped:Connect(function()
+    if delete == false then
+        delete = true
+        placing = false
+        PlaceBlock.Parent = nil
+    else
+        delete = false
+        RemoveSelect.Adornee = nil
+    end
+end)
+ 
+script.Parent.Unequipped:Connect(function()
+    if delete == false then
+        delete = false
+        placing = false
+        PlaceBlock.Parent = nil
+        RemoveSelect.Adornee = nil
+    else
+        delete = false
+        RemoveSelect.Adornee = nil
+    end
+end)
+ 
+ 
+RunService.RenderStepped:Connect(function()
+    if delete == true then
+        if mouse.Target ~= nil then
+            if mouse.Target.Name == "Block" then
+                RemoveSelect.Adornee = mouse.Target
+            end
+        end
+    end
+end)
+ 
+local Material = "Wool"
+ 
+----PLACING
+ 
+local PlacingEvent = game.ReplicatedStorage.RemoteEvents.PlaceEvent
+local RemoveEvent = game.ReplicatedStorage.RemoteEvents.RemoveEvent
+ 
+ 
+script.Parent.Activated:Connect(function()
+    AnimTrack:Play()
+    if delete == true then
+        if mouse.Target ~= nil then
+            if RemoveSelect.Adornee == mouse.Target and mouse.Target.Name == "Block" then
+                RemoveEvent:FireServer(mouse.Target)
+            end
+        end
+    end
+end)
