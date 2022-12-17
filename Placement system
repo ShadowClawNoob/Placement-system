@@ -1,0 +1,123 @@
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local maxDistance = 20
+
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Anim = script:WaitForChild("Animation")
+local character = player.Character or player.CharacterAdded:Wait()
+local Humanoid = character:WaitForChild("Humanoid")
+local Handle = script.Parent:WaitForChild("Handle")
+
+local AnimTrack = Humanoid:LoadAnimation(Anim)
+
+local placing = false
+local delete = false
+
+--BLOCK
+local PlaceBlock = Instance.new("Part")
+PlaceBlock.Size = Vector3.new(3, 3, 3)
+PlaceBlock.Material = Enum.Material.SmoothPlastic
+PlaceBlock.Anchored = true
+PlaceBlock.CanCollide = false
+PlaceBlock.Transparency = 0.5
+PlaceBlock.BrickColor = BrickColor.new("New Yeller")
+
+script.Parent.Equipped:Connect(function()
+	if placing == false then
+		placing = true
+		delete = false
+	else
+		placing = false
+		PlaceBlock.Parent = nil
+	end
+end)
+
+script.Parent.Unequipped:Connect(function()
+	if placing == false then
+		placing = false
+		delete = false
+	else
+		placing = false
+		PlaceBlock.Parent = nil
+	end
+end)
+
+RunService.RenderStepped:Connect(function() -- for placing
+	if placing == true then
+		PlaceBlock.Parent = game.Workspace -- putting parent for placement block
+		if mouse.Target ~= nil then
+			if mouse.Target.Name == "Block" or mouse.Target.Name == "Cannotdelete" then
+				local target = mouse.Target
+				local TargetSurface = mouse.TargetSurface
+
+				if TargetSurface.Name == "Top" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,3,0)--based on coordinates XYZ
+				elseif TargetSurface.Name == "Bottom" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,-3,0) -- just copy        
+				elseif TargetSurface.Name == "Right" then
+					PlaceBlock.Position = target.Position + Vector3.new(3,0,0)
+				elseif TargetSurface.Name == "Left" then
+					PlaceBlock.Position = target.Position + Vector3.new(-3,0,0)
+				elseif TargetSurface.Name == "Back" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,0,3)
+				elseif TargetSurface.Name == "Front" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,0,-3)
+				end
+			end
+		end
+	end
+end)
+
+local function OnDeath()
+	game.Debris:AddItem(PlaceBlock, 0)
+	game.Debris:AddItem(script.Parent, 0)
+end
+
+Humanoid.Died:Connect(OnDeath)
+
+local Material = "Wool"
+
+----PLACING
+
+local PlaceEvent = game.ReplicatedStorage.RemoteEvents.PlaceEvent
+
+
+script.Parent.Activated:Connect(function()
+	AnimTrack:Play()
+	if placing == true then
+		if mouse.Target ~= nil then
+			if (mouse.Target.Position - character.HumanoidRootPart.Position).Magnitude < maxDistance then
+				PlaceEvent:FireServer(PlaceBlock.Position, Material)
+				print("Place")
+				local target = mouse.Target
+				local TargetSurface = mouse.TargetSurface
+				Handle.WoolValue.Value = Handle.WoolValue.Value - 1
+
+				if TargetSurface.Name == "Top" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,3,0)--based on coordinates XYZ
+				elseif TargetSurface.Name == "Bottom" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,-3,0) -- just copy        
+				elseif TargetSurface.Name == "Right" then
+					PlaceBlock.Position = target.Position + Vector3.new(3,0,0)
+				elseif TargetSurface.Name == "Left" then
+					PlaceBlock.Position = target.Position + Vector3.new(-3,0,0)
+				elseif TargetSurface.Name == "Back" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,0,3)
+				elseif TargetSurface.Name == "Front" then
+					PlaceBlock.Position = target.Position + Vector3.new(0,0,-3)
+				end
+			end
+		end
+	else
+		task.wait(4)
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if Handle.WoolValue.Value == 0 or Handle.WoolValue.Value == -1 then
+		game.Debris:AddItem(PlaceBlock, 0)
+		game.Debris:AddItem(script.Parent, 0)
+	end
+end)
